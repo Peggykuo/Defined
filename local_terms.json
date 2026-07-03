@@ -1,0 +1,13 @@
+{
+  "tmux": "A terminal multiplexer that lets you split terminal sessions into multiple panes, run tasks in the background, and keep sessions active when disconnected.",
+  "git": "A distributed version control system that tracks file changes and coordinates work on shared code repositories.",
+  "docker": "A containerization platform that packages software into standardized units (containers) containing everything needed to run it.",
+  "kubernetes": "An open-source orchestration system for automating containerized application deployment, scaling, and management.",
+  "recursion": "A programming technique where a function calls itself directly or indirectly to solve a problem by breaking it into smaller sub-problems.",
+  "api": "Application Programming Interface. A set of rules and protocols that allows different software applications to communicate with each other.",
+  "npm": "Node Package Manager. The default package manager for the JavaScript runtime environment Node.js, hosting millions of reusable code packages.",
+  "ssh": "Secure Shell. A cryptographic network protocol for operating network services securely over an unsecured network, typically used for remote CLI logins.",
+  "sql": "Structured Query Language. A standardized programming language used to manage, query, and manipulate relational databases.",
+  "rest api": "A web API that adheres to Representational State Transfer constraints, allowing interaction with stateless, resource-oriented endpoints.",
+  "cli": "Command Line Interface. A text-based user interface used to run programs, manage files, and interact with the computer using commands."
+}

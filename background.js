@@ -14,3 +14,20 @@ function setEmojiIcon(emoji) {
 chrome.runtime.onInstalled.addListener(() => {
   setEmojiIcon('🌸');
 });
+
+
+let localGlossary = {};
+
+
+//Load local curated database on initialization
+fetch(chrome.runtime.getURL('local_terms.json'))
+    .then(response=> response.json())
+    .then(data => {
+        localGlossary = data;
+        console.log("Defined: Local wordbase loaded.");
+    })
+    .catch(err =>{
+        console.error("Defined: Failed to load local wordbase:", err);
+    });
+
+    
