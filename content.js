@@ -196,6 +196,58 @@
   let popup = null;
   let activeAudioUrl = null;
   let activeWord = '';
+  let activeRect = null;
+
+  // Persistent Port Infrastructure to survive service worker timeouts
+  let port = null;
+
+  function connectToBackground() {
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+      port = null;
+      return;
+    }
+
+    try {
+      port = chrome.runtime.connect({ name: 'defined-communication-channel' });
+      
+      port.onMessage.addListener((response) => {
+        handleBackgroundResponse(response);
+      });
+
+      port.onDisconnect.addListener(() => {
+        port = null;
+        // If an active request was cut short due to structural disconnect, auto-retry execution
+        if (activeWord) {
+          setTimeout(() => {
+            connectToBackground();
+            if (port && activeWord) {
+              port.postMessage({ action: 'fetchDefinition', word: activeWord });
+            }
+          }, 100);
+        }
+      });
+    } catch (e) {
+      port = null;
+    }
+  }
+
+  // Initialize Port connection immediately upon file script runtime initialization
+  connectToBackground();
+
+  // Unified communication processor for receiving pipeline data packets back from background
+  function handleBackgroundResponse(response) {
+    if (!popup || activeWord !== response.word) return;
+
+    if (response.success) {
+      renderDefinition(response.data);
+    } else {
+      renderError(response.error || 'Failed to look up term');
+    }
+    
+    setTimeout(() => {
+      if (popup && activeRect) positionPopup(activeRect);
+    }, 20);
+  }
 
   // Helper to create the popup DOM structure
   function createPopup() {
@@ -225,6 +277,7 @@
       popup = null;
       activeAudioUrl = null;
       activeWord = '';
+      activeRect = null;
     }
   }
 
@@ -274,23 +327,20 @@
     positionPopup(selectionRect);
 
     activeWord = word;
+    activeRect = selectionRect;
     activeAudioUrl = null;
 
-    // Request background service worker to fetch definition
-    chrome.runtime.sendMessage({ action: 'fetchDefinition', word: word }, (response) => {
-      if (!popup || activeWord !== word) return;
+    // Re-verify port integrity before transferring data packets
+    if (!port) {
+      connectToBackground();
+    }
 
-      if (response && response.success) {
-        renderDefinition(response.data);
-      } else {
-        renderError(response ? response.error : 'Failed to look up term');
-      }
-      
-      // Re-position because height changed
-      setTimeout(() => {
-        if (popup) positionPopup(selectionRect);
-      }, 20);
-    });
+    if (port) {
+      port.postMessage({ action: 'fetchDefinition', word: word });
+    } else {
+      renderError('Context dropped. Please reload the webpage.');
+      positionPopup(selectionRect);
+    }
   }
 
   // Render definition payload
@@ -354,8 +404,15 @@
 
   // Speech helper
   function speakWord() {
-    if (activeAudioUrl) {
+    // Ensure the URL is present, starts with http/https, and does not contain broken fragments
+    if (activeAudioUrl && (activeAudioUrl.startsWith('http://') || activeAudioUrl.startsWith('https://'))) {
       const audio = new Audio(activeAudioUrl);
+      audio.play().catch(() => {
+        fallbackSpeak();
+      });
+    } else if (activeAudioUrl && activeAudioUrl.startsWith('//')) {
+      // Fix relative protocol URLs string paths
+      const audio = new Audio(`https:${activeAudioUrl}`);
       audio.play().catch(() => {
         fallbackSpeak();
       });
