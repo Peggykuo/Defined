@@ -3,8 +3,20 @@
   "name": "Defined",
   "version": "1.0",
   "description": "Select any word, programming term, or command to see its definition instantly (combining dictionary & developer search).",
-    "background": {
-        "service_worker": "background.js"
-    },
-    "action": {}
+  "permissions": [
+    "activeTab"
+  ],
+  "background": {
+      "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
 }
